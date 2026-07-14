@@ -124,8 +124,14 @@
 - 수동 검증
   - 데스크톱 폭과 모바일 폭에서 화면 확인
   - 키보드 및 터치 입력 확인
+  - 가능한 경우 Playwright Chromium을 사용한 브라우저 자동화 검증
 
 실제 실행 여부는 구현 단계에서 결정한다.
+
+보조 메모:
+
+- 전역 설치된 Playwright는 CLI로 직접 실행하거나, Node 스크립트에서 `NODE_PATH=$(npm root -g)`를 지정해 사용할 수 있다.
+- `require('playwright')`가 실패하면 로컬 설치 누락이 아니라 Node 모듈 해석 경로 문제일 수 있다.
 
 ## 3. Observe
 
@@ -180,7 +186,7 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
 
 - 한 번에 하나의 실패 원인만 수정한다.
 - 관련된 최소 파일만 변경한다.
-- 수정 후 동일한 verifier를 다시 실행한다.
+- 수정 후 동일 verifier를 다시 실행한다.
 - 이미 통과한 기능에 대해 회귀 테스트를 포함한다.
 
 권장 반복 방식:
@@ -239,470 +245,166 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
 
 | 단계 | 입력 | Act | Observe | 출력 | 테스트 기준 | 다음 상태 |
 |---|---|---|---|---|---|---|
-| 저장소 및 기존 파일 확인 | 저장소 URL, 로컬 클론 여부, 현재 파일 목록 | 저장소 루트와 기존 파일을 확인하고 작업 범위를 정리한다 | `index.html`, `styles.css`, `script.js` 존재 여부, 기존 프레임워크 여부, README 유무 | 작업 전제와 파일 목록 | 루트 구조가 설명 가능하고, 시작점이 명확함 | READY |
-| 저장소 및 기존 파일 확인 | 위와 같음 | 필요 시 레거시 파일과 신규 파일 충돌 가능성을 식별한다 | 정적 사이트인지, 빌드 도구가 있는지, 삭제 위험 여부 | 루프 분해 기준 | 기존 콘텐츠 삭제 필요 여부가 판정됨 | HITL_REQUIRED 또는 READY |
-| 정적 사이트 기본 구조 | 개인 사이트 목표, 배포 제약 | `index.html`, `styles.css`, `script.js` 기본 골격을 정의한다 | 문서 구조, meta viewport, 기본 셸 존재 | 최소 정적 셸 | HTML 구조가 유효하고 모바일 viewport가 포함됨 | ACTING |
-| 정적 사이트 기본 구조 | 위와 같음 | 섹션 레이아웃과 기본 스타일을 준비한다 | 화면 폭 변화에서 레이아웃 유지 여부 | 반응형 기본 레이아웃 | 375px와 데스크톱에서 구조 유지 | VERIFYING |
-| 정적 사이트 기본 구조 | 렌더 결과 | 동일 verifier로 HTML/CSS 확인 | 콘솔 오류, 오버플로우, 잘린 콘텐츠 | 통과 또는 실패 원인 | 시각적 붕괴 없음 | PASSED 또는 RETRYING |
-| 프로페셔널 콘텐츠 영역 | 이름, 소개, 경력, 프로젝트, 연락처 | 콘텐츠 섹션을 채운다 | 문구 명확성, 중복, 누락 | 콘텐츠가 있는 사이트 | 핵심 정보 5초 내 식별 가능 | CONTENT / HITL_REQUIRED / PASSED |
-| 반응형 내비게이션 | 메뉴 항목, 모바일 폭 | 상단 네비게이션과 반응형 메뉴를 구현한다 | 줄바꿈, 오버플로우, 포커스 이동 | 데스크톱/모바일 네비 | 메뉴 항목이 화면 밖으로 넘치지 않음 | CSS_RESPONSIVE |
-| Games 탭 | 게임 페이지/섹션 배치 | `Games` 탭을 추가하고 진입점을 만든다 | 클릭/터치/키보드 진입 가능 여부 | 게임 접근 경로 | 탭이 항상 보이고 접근 가능 | HTML_STRUCTURE / GAME_CONTROL |
-| 지렁이 게임 핵심 로직 | 게임 규칙, grid 크기, 먹이/충돌 규칙 | 이동, 성장, 점수, 종료, 재시작을 구현한다 | 게임 상태 전이, 충돌 판정, 점수 증가 | 실행 가능한 게임 | 먹이/충돌/재시작이 정확함 | GAME_LOGIC / JAVASCRIPT |
-| 키보드 조작 | 키 배열, 포커스 정책 | 방향키/WASD 입력을 연결한다 | 입력 지연, 반대 방향 처리, 스크롤 간섭 | 키보드 조작 가능 상태 | 키 입력이 안정적으로 반영됨 | GAME_CONTROL |
-| 모바일 터치 조작 | 모바일 UI 방식 [사람 확인 필요] | 터치 버튼 또는 스와이프를 연결한다 | 오입력, 버튼 크기, 화면 겹침 | 모바일 조작 가능 상태 | 작은 화면에서 실제 조작 가능 | GAME_CONTROL / CSS_RESPONSIVE |
-| 게임 UI 및 점수 | 점수 표시, 시작/재시작 UI | HUD, 안내문, 재시작 버튼을 배치한다 | 가독성, 상태 인지 가능성 | 게임 보조 UI | 점수와 상태가 명확히 보여야 함 | PASSED 또는 RETRYING |
-| 접근성과 반응형 검증 | 구현 완료본 | 접근성, 모바일/데스크톱 뷰를 검증한다 | 색 대비, 키보드 포커스, 오버플로우 | 검증 결과 | 두 화면 폭에서 핵심 기능 정상 | CSS_RESPONSIVE / HTML_STRUCTURE / TEST |
-| GitHub Pages 호환성 검증 | 정적 파일 전체 | 상대 경로와 정적 호스팅 호환성을 검증한다 | 절대 경로, 빌드 의존, 파일 404 | 배포 가능성 판정 | GitHub Pages에서 깨질 요소 없음 | DEPLOY_READY 또는 DEPLOYMENT |
-| 배포 | 배포 승인, 권한, Pages 설정 | GitHub Pages에 배포한다 | 배포 성공 여부, live URL 응답 | 배포 완료 | 라이브 사이트 응답 | DEPLOYING → DEPLOYED |
-
-## 10. 상태 전이 규칙
-
-### 공통 전이
-
-- `READY` → `ACTING`
-- `ACTING` → `VERIFYING`
-- `VERIFYING` → `PASSED` 또는 `RETRYING` 또는 `HITL_REQUIRED` 또는 `BLOCKED`
-- `RETRYING` → `ACTING`
-- `PASSED` → 다음 루프의 `READY`
-- `DEPLOY_READY` → `DEPLOYING`
-- `DEPLOYING` → `DEPLOYED` 또는 `BLOCKED`
-
-### 실패 분기
-
-- `CONTENT` 또는 개인 정보 관련 불확실성: `HITL_REQUIRED`
-- 인증/권한 문제: `GITHUB_PERMISSION`
-- 배포 호환성 문제: `DEPLOYMENT`
-- 환경 문제: `ENVIRONMENT`
-- 원인 미확정: `UNKNOWN`
-
-## 11. 추천 개발 루프 순서
-
-가장 안전한 순서는 다음과 같다.
-
-1. 저장소 및 기존 파일 확인
-2. 정적 사이트 기본 구조
-3. 프로페셔널 콘텐츠 영역
-4. 반응형 내비게이션
-5. Games 탭
-6. 지렁이 게임 핵심 로직
-7. 키보드 조작
-8. 모바일 터치 조작
-9. 게임 UI 및 점수
-10. 접근성과 반응형 검증
-11. GitHub Pages 호환성 검증
-12. 배포
-
-이 순서는 정적 사이트의 안전한 기반을 먼저 만들고, 그 위에 게임의 상태 복잡도를 단계적으로 올리는 방식이다.
-
-## 12. 실행 메모
-
-- 코드 변경 전에는 콘텐츠 확인이 필요한 항목을 먼저 구분한다.
-- 게임 관련 추가 요구사항은 Step 1의 `[게임 추가 기능:]` 존재 여부를 확인한 뒤 반영한다 [사람 확인 필요].
-- 설계와 구현을 분리한다. 현재 문서는 구현 지시서가 아니라 상태 머신 정의서다.
-
-## 13. Self-Correcting TDD Loop
-
-이 섹션은 정적 GitHub Pages 사이트와 `Games` 탭의 지렁이 게임을 대상으로 하는 Verifier 중심 반복 루프를 정의한다.
-
-### 13.1 현재 환경에서 확인된 Verifier 도구
-
-현재 작업 환경에서 실제로 확인된 도구만 사용한다.
-
-- 사용 가능:
-  - `python3`
-  - `node`
-  - `npm`
-  - `npx`
-  - `curl`
-  - `claude`
-- 사용 불가 또는 미확인:
-  - `jq`
-  - `chromium`
-  - `chromium-browser`
-  - `google-chrome`
-  - `google-chrome-stable`
-  - `firefox`
-  - `playwright`
-
-Claude Code CLI는 `2.1.208`이며, `--model sonnet` 실행 결과 `Claude Sonnet 5 (claude-sonnet-5)`를 반환했다. 따라서 독립 Verifier가 필요할 때는 Sonnet 5를 사용한다.
-
-주의:
-
-- 존재하지 않는 `npm` 스크립트나 테스트 명령어를 추정해서 사용하지 않는다.
-- `package.json`이 있으면 실제 `scripts`만 읽고 사용한다.
-- 현재 환경에는 브라우저 자동화 도구가 없으므로, viewport 검증은 브라우저 도구가 추가되기 전까지는 로컬 서버 + 수동 확인 또는 독립 Verifier의 코드 검토로 보조한다.
-- 브라우저 도구가 없다는 사실을 코드 실패로 오인하지 말고 `ENVIRONMENT`로 분류한다.
-
-### 13.2 루프 원칙
-
-1. 한 Retry에서는 하나의 실패 원인만 수정한다.
-2. 관련 파일만 수정한다.
-3. 통과한 기능은 건드리지 않는다.
-4. 테스트 삭제나 검증 기준 완화는 금지한다.
-5. 외부 프레임워크로 임의 전환하지 않는다.
-6. 환경 또는 권한 문제는 코드 수정으로 해결하려 하지 않는다.
-7. 동일 오류 fingerprint가 2회 반복되면 중지한다.
-8. 하나의 오류에 대해 최대 3회까지만 Retry한다.
-
-### 13.3 표준 반복 순서
-
-각 루프는 다음 순서로 진행한다.
-
-1. 현재 저장소 상태와 실제 파일을 확인한다.
-2. 사용 가능한 verifier를 확인한다.
-3. 가장 직접적인 실패 원인을 하나만 고른다.
-4. 최소 수정만 적용한다.
-5. 동일 verifier를 다시 실행한다.
-6. 실패 로그와 fingerprint를 기록한다.
-7. 같은 fingerprint면 중단한다.
-8. 다르면 동일 원인에 대해 최대 3회까지 재시도한다.
-
-### 13.4 실패 로그 형식
-
-실패가 나면 아래 항목을 반드시 남긴다.
-
-- 실행 명령어
-- exit code
-- 실패한 검증 항목
-- 핵심 오류 메시지
-- 관련 파일과 라인
-- 브라우저 콘솔 메시지
-- 오류 fingerprint
-- 분류 결과
-
-권장 fingerprint 형식:
-
-`<CATEGORY>|<command>|<exit_code>|<primary_error>|<file:line>|<console_signature>`
-
-동일한 fingerprint는 메시지의 공백, 경로 표기 차이, 시간 정보만 정규화한 뒤 비교한다.
-
-### 13.5 원인 분류 규칙
-
-실패는 아래 분류 중 하나만 선택한다.
-
-| 분류 | 사용 조건 |
-|---|---|
-| HTML_STRUCTURE | 문서 구조, 섹션 배치, 태그 누락, `index.html` 부재 |
-| CSS_RESPONSIVE | 데스크톱/태블릿/모바일 레이아웃, 오버플로우, 반응형 실패 |
-| JAVASCRIPT | 문법 오류, 런타임 예외, DOM null 참조, 페이지 로드 실패 |
-| GAME_LOGIC | 지렁이 이동, 성장, 점수, 충돌, 상태 전이 |
-| GAME_CONTROL | 키보드, WASD, 모바일 버튼, 터치, 포커스, 중복 입력 |
-| CONTENT | 이름, 소개, 경력, 프로젝트, 연락처, 설명 문구의 부재 또는 불명확성 |
-| TEST | verifier 자체의 실패, 명령 누락, 검증 범위 부족, 로그 수집 실패 |
-| ENVIRONMENT | 로컬 서버, 브라우저 도구 부재, 경로 대소문자, OS 차이 |
-| GITHUB_PERMISSION | GitHub 접근, 권한, Pages 설정 접근 실패 |
-| DEPLOYMENT | GitHub Pages 배포 실패, 라이브 경로 문제, 배포 호환성 실패 |
-| UNKNOWN | 위 항목으로 확정할 수 없음 |
-
-분류 원칙:
-
-- 여러 증상이 있어도 최초 원인을 우선한다.
-- 브라우저 콘솔 오류와 파일 누락이 동시에 있으면, 먼저 누락 파일을 원인으로 본다.
-- 경로 문제는 `ENVIRONMENT`가 아니라 실제 원인에 따라 `HTML_STRUCTURE`, `CSS_RESPONSIVE`, `JAVASCRIPT`, `DEPLOYMENT` 중 하나로 우선 분류한다.
-- 권한 문제만 독립적으로 발생하면 `GITHUB_PERMISSION`으로 분류한다.
-
-### 13.6 Verifier 우선순위
-
-검증은 가능한 한 아래 순서로 수행한다.
-
-1. 파일 존재 확인
-2. 정적 참조 확인
-3. JS 문법 확인
-4. 로컬 HTTP 응답 확인
-5. 브라우저 검증
-6. 독립 Verifier 재판독
-
-현재 환경 기준으로 실제 사용할 수 있는 핵심 명령은 다음과 같다.
-
-- 파일 존재 확인
-  - `test -f index.html`
-  - `test -f styles.css`
-  - `test -f script.js`
-- JS 문법 확인
-  - `node --check script.js`
-- 로컬 서버 확인
-  - `python3 -m http.server`
-- HTTP 응답 확인
-  - `curl -I http://127.0.0.1:<port>/`
-  - `curl -I http://127.0.0.1:<port>/index.html`
-  - `curl -I http://127.0.0.1:<port>/styles.css`
-  - `curl -I http://127.0.0.1:<port>/script.js`
-- 독립 Verifier
-  - `claude --print --model sonnet ...`
-
-### 13.7 기본 파일 검증 루프
-
-목표:
-
-- 루트의 `index.html` 존재 확인
-- CSS와 JavaScript 연결 확인
-- 잘못된 로컬 파일 경로 확인
-- 대소문자 불일치 확인
-- GitHub Pages에서 사용할 수 없는 절대 로컬 경로 확인
-
-권장 verifier:
-
-- `test -f index.html`
-- `test -f styles.css`
-- `test -f script.js`
-- `curl -s http://127.0.0.1:<port>/` 또는 정적 소스 읽기
-
-실패 신호:
-
-- `index.html` 없음
-- `<link>` 또는 `<script>`가 실제 파일과 불일치
-- 상대 경로가 파일 시스템과 맞지 않음
-- 대소문자만 다른 경로 참조
-- `/Users/...`, `C:\...` 같은 절대 로컬 경로
-
-분류:
-
-- 구조 누락은 `HTML_STRUCTURE`
-- 정적 경로 불일치는 `HTML_STRUCTURE` 또는 `DEPLOYMENT`
-- 대소문자 불일치와 파일 시스템 의존은 `ENVIRONMENT` 또는 실제 증상에 맞는 상위 분류
-
-### 13.8 HTML 검증 루프
-
-목표:
-
-- 기본 문서 구조
-- `title`, `meta viewport`
-- 시맨틱 태그
-- 내비게이션 링크
-- `Games` 영역
-- 이미지 `alt` 속성
-- 깨진 내부 링크
-
-권장 verifier:
-
-- 소스 점검으로 `<!doctype html>`, `<html lang=...>`, `<head>`, `<body>` 확인
-- `<title>`과 `meta viewport` 확인
-- `nav`, `main`, `section`, `footer` 같은 시맨틱 태그 확인
-- `a href="#...">` 와 대응하는 `id` 존재 확인
-- `img`의 `alt` 속성 확인
-
-실패 신호:
-
-- 문서 골격 부재
-- viewport 누락
-- 내비게이션 항목과 대상 섹션 불일치
-- `Games` 섹션 미존재
-- 이미지 대체 텍스트 누락
-- 내부 링크 대상 `id` 누락
-
-분류:
-
-- 구조 또는 링크 문제는 `HTML_STRUCTURE`
-- 콘텐츠 문구 자체가 비어 있으면 `CONTENT`
-
-### 13.9 CSS 검증 루프
-
-목표:
-
-- 데스크톱 화면
-- 태블릿 화면
-- 모바일 화면
-- 가로 스크롤 발생 여부
-- 내비게이션 및 `Games` UI 반응형 동작
-
-권장 verifier:
-
-- 로컬 서버에서 페이지를 열고 폭별 시각 확인
-- 브라우저 도구가 존재할 경우 375px, 768px, 1440px viewport로 확인
-- 브라우저 도구가 없을 경우 반응형 관련 CSS 규칙과 overflow 가능성을 소스 검토로 확인
-
-실패 신호:
-
-- 375px에서 가로 스크롤 발생
-- 768px에서 네비게이션 또는 게임 UI가 겹침
-- 1440px에서 레이아웃이 과도하게 퍼짐
-- 모바일에서 버튼이 터치 불가능하게 작음
-
-분류:
-
-- 반응형 실패는 `CSS_RESPONSIVE`
-- viewport 의존성 누락도 `CSS_RESPONSIVE`
-
-### 13.10 JavaScript 검증 루프
-
-목표:
-
-- 문법 오류
-- 브라우저 콘솔 오류
-- DOM 요소 null 참조
-- 중복 이벤트 리스너
-- 페이지 로드 시 오류
-
-권장 verifier:
-
-- `node --check script.js`
-- 로컬 서버 접속 후 브라우저 콘솔 확인
-- 초기화 루틴을 재진입해도 이벤트가 누적되지 않는지 점검
-
-실패 신호:
-
-- `SyntaxError`
-- `ReferenceError`
-- `TypeError: Cannot read properties of null`
-- 동일 핸들러가 여러 번 붙는 증상
-- 로드 직후 예외 발생
-
-분류:
-
-- 문법/런타임/DOM 오류는 `JAVASCRIPT`
-
-### 13.11 지렁이 게임 검증 루프
-
-목표:
-
-- 게임 시작
-- 일시정지
-- 다시 시작
-- 점수 증가
-- 음식 생성
-- 벽 또는 자기 몸 충돌
-- 키보드 방향키 또는 WASD 조작
-- 모바일 버튼 또는 터치 조작
-- 반대 방향 즉시 전환 방지
-- `Games` 탭을 다시 열었을 때 중복 실행 방지
-
-권장 verifier:
-
-- 키보드 입력으로 시작/이동/일시정지/재시작 시나리오를 수행한다
-- 음식이 먹힌 뒤 점수가 증가하는지 확인한다
-- 벽 충돌과 자기 몸 충돌 시 종료되는지 확인한다
-- 반대 방향 입력을 즉시 넣어도 금지되는지 확인한다
-- 모바일 버튼 또는 터치 입력이 실제로 동작하는지 확인한다
-- `Games` 탭을 닫았다가 다시 열어도 타이머, 이벤트, 상태가 중복 생성되지 않는지 확인한다
-
-실패 신호:
-
-- 시작 버튼이 게임 루프를 시작하지 않음
-- 일시정지 후 재개가 되지 않음
-- 재시작 후 이전 상태가 남아 있음
-- 점수가 증가하지 않음
-- 음식이 겹치거나 생성되지 않음
-- 벽/자기 몸 충돌이 끝나지 않음
-- 방향 반전으로 즉시 자가 충돌이 발생함
-- `Games` 탭 재진입 시 속도 증가, 중복 이동, 중복 리스너가 발생함
-
-분류:
-
-- 규칙/충돌/점수는 `GAME_LOGIC`
-- 입력/포커스/터치/중복 실행은 `GAME_CONTROL`
-
-### 13.12 로컬 실행 검증 루프
-
-가능한 경우 다음 순서로 검증한다.
-
-1. `python3 -m http.server <port>`
-2. `curl -I http://127.0.0.1:<port>/`
-3. `curl -I http://127.0.0.1:<port>/index.html`
-4. `curl -I http://127.0.0.1:<port>/styles.css`
-5. `curl -I http://127.0.0.1:<port>/script.js`
-
-판정 기준:
-
-- HTTP 200 응답이 와야 한다
-- `index.html`이 정상 로드되어야 한다
-- CSS와 JavaScript 파일이 응답해야 한다
-- 404 또는 빈 응답은 실패다
-
-실패 분류:
-
-- 포트 충돌이나 로컬 서버 부재는 `ENVIRONMENT`
-- 파일 응답 실패는 실제 원인에 따라 `HTML_STRUCTURE`, `CSS_RESPONSIVE`, `JAVASCRIPT`, `DEPLOYMENT`로 분류한다
-
-### 13.13 브라우저 검증 루프
-
-가능한 도구가 있을 때만 다음 viewport를 확인한다.
-
-- 모바일: 약 375px
-- 태블릿: 약 768px
-- 데스크톱: 약 1440px
-
-현재 환경에는 브라우저 자동화 도구가 없으므로, 이 항목은 다음 우선순위로 처리한다.
-
-1. 브라우저 도구가 추가되면 자동화 검사로 수행
-2. 없으면 수동 브라우저 확인
-3. 둘 다 불가하면 `ENVIRONMENT`로 기록하고 중단
-
-브라우저 검증에서 수집할 것:
-
-- 실제 viewport 폭
-- 시각적 깨짐
-- 가로 스크롤
-- 네비게이션과 `Games` UI의 배치
-- 콘솔 에러
-
-### 13.14 GitHub Pages 호환성 검증 루프
-
-목표:
-
-- 루트 `index.html`
-- 정적 상대 경로
-- 서버 전용 기능 미사용
-- 로컬 파일 시스템 의존성 미사용
-- 백엔드 API 의존성 미사용
-
-권장 verifier:
-
-- 정적 경로에서 절대 로컬 경로가 없는지 확인
-- `fetch("file://...")` 같은 로컬 파일 의존이 없는지 확인
-- 서버 전용 환경 변수나 런타임이 없어도 동작하는지 확인
-- GitHub Pages 루트 또는 서브경로 배포를 가정해도 상대 경로가 유지되는지 확인
-
-실패 분류:
-
-- 루트 구조 문제는 `HTML_STRUCTURE`
-- 경로 문제는 `DEPLOYMENT`
-- 로컬 파일 의존은 `DEPLOYMENT` 또는 `ENVIRONMENT`
-- 백엔드 의존은 `DEPLOYMENT`
-
-### 13.15 독립 Verifier로서 Claude Sonnet 5 사용법
-
-Claude Code CLI는 독립 Verifier로만 사용한다. 최종 진실은 항상 파일, 로그, HTTP 응답, 브라우저 관찰이다.
-
-사용 방식:
-
-- 실패 요약, 명령어, exit code, 관련 파일/라인, 콘솔 메시지를 Sonnet 5에 전달한다
-- Sonnet 5에게 실패 원인 분류와 최소 수정 가설을 요청한다
-- Sonnet 5의 제안은 보조 의견으로만 사용하고, 직접 검증을 대체하지 않는다
-
-권장 질문:
-
-- `"다음 실패 로그를 분류하고, 가장 좁은 수정 가설 1개만 제시해줘."`
-- `"이 로그에서 가장 가능성 높은 실패 원인은 무엇이며, 어떤 파일만 고쳐야 하나?"`
-- `"이 변경이 기존 통과 항목을 깨뜨릴 가능성이 있는지 검토해줘."`
-
-### 13.16 Retry 기록 템플릿
-
-각 Retry는 아래 형식으로 기록한다.
-
-| Retry | 가설 | 변경 파일 | 실행 명령어 | 결과 | fingerprint |
-|---|---|---|---|---|---|
-| 1 | 실패 원인 1개 | 최소 범위 파일만 | 실제 실행한 verifier | 통과 또는 실패 | 정규화된 오류 서명 |
-
-기록 규칙:
-
-- 같은 실패에 대해 1회차, 2회차, 3회차를 구분한다
-- 2회차에서 fingerprint가 1회차와 같으면 즉시 중지한다
-- 실패가 바뀌면 새 fingerprint로 간주한다
-
-### 13.17 최소 수정 원칙에 따른 실제 순서
-
-1. 실패 원인 1개를 고른다.
-2. 그 원인과 직접 연결된 파일만 수정한다.
-3. 수정 범위가 넓어지면 멈추고 다시 범위를 줄인다.
-4. 동일 verifier를 재실행한다.
-5. 통과하면 다음 루프로 넘어간다.
-6. 실패가 반복되면 fingerprint 기준으로 중단한다.
-
-### 13.18 이 저장소에 대한 초기 적용 메모
-
-현재 저장소 구조 확인 결과, 루트에는 `AORR.md`와 `README.md`만 확인되었다. 즉, 이 루프는 아직 실제 사이트 파일이 없는 초기 상태까지 포함해야 한다.
-
-- `index.html`, `styles.css`, `script.js`가 아직 없으면 먼저 파일 존재 여부 자체를 실패로 기록한다
-- `package.json`이 없으므로 npm 스크립트는 추정하지 않는다
-- 브라우저 도구가 없으므로 viewport 검증은 환경 추가 전까지는 보류한다
-- Claude Sonnet 5는 현재 사용 가능하므로, 독립 Verifier가 필요할 때 우선적으로 사용한다
+| READY | 기준선, 요구사항, 파일 구조 | 수정 범위 정의 | 실패 원인/변경 후보 식별 | 실행 가능한 루프 | 범위와 verifier가 정의됨 | ACTING |
+| ACTING | 실행 가능한 루프 | 최소 수정 수행 | 변경 파일과 diff 확인 | 수정 완료 후보 | 예상 파일만 바뀜 | VERIFYING |
+| VERIFYING | 수정된 산출물 | 동일 verifier 실행 | 콘솔, 렌더, 응답 코드 확인 | 성공/실패 판정 | 완료 기준 충족 | PASSED 또는 RETRYING |
+| RETRYING | 실패한 검증 결과 | 실패 원인 1개만 재수정 | 동일 fingerprint 여부 확인 | 재시도 결과 | fingerprint 변경 또는 해결 | ACTING 또는 STOP |
+| PASSED | 통과한 루프 | 회귀 범위 확인 | 인접 기능 깨짐 여부 확인 | 다음 루프 준비 | 회귀 없음 | READY 또는 DEPLOY_READY |
+| DEPLOY_READY | 모든 루프 통과 | 배포 승인 확인 | 배포 전 최종 점검 | 배포 가능 상태 | 배포 전 조건 충족 | DEPLOYING |
+| DEPLOYING | 승인된 배포 | GitHub Pages 반영 | 라이브 URL 응답 확인 | 라이브 배포 | HTTP 200 및 기능 유지 | DEPLOYED |
+| BLOCKED | 외부 제약 | 원인 기록 | 해제 조건 확인 | 중단 상태 | 자체 해결 불가 | HITL_REQUIRED 또는 READY |
+| HITL_REQUIRED | 사람 확인 필요 항목 | 질문/대기 | 답변 반영 | 재개 가능 여부 | 필요 정보 확보 | READY |
+
+## 10. Retry 정책
+
+- 하나의 실패 원인당 최대 3회
+- 동일 fingerprint가 2회 반복되면 즉시 중지
+- Retry마다 동일 verifier를 유지한다
+- Retry 동안에는 범위를 넓히지 않는다
+
+## 11. GitHub Pages 호환성
+
+- 정적 파일만으로 동작해야 한다.
+- 상대 경로는 루트 배포와 서브경로 배포를 모두 고려한다.
+- 루트 파일명은 `index.html` 기준으로 유지한다.
+- 브라우저 기능만으로 동작해야 한다.
+
+## 12. Change Request Loop Plan
+
+### Change Request Overview
+
+- Change Request ID: `CR-20260714-001`
+- 기준선 commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- 기준선 URL: `https://dooho-h.github.io/`
+- 현재 계획 상태: `CHANGE_PLANNED`
+
+### Loop Summary
+
+| Loop ID | Connected Change Item | Target | Status | Next |
+|---|---|---|---|---|
+| LOOP-CR-001 | CR-001 | Game over / Pause 문구 겹침 버그 제거 | READY | LOOP-CR-002 |
+| LOOP-CR-002 | CR-002 | Games 진입을 플로팅 버튼으로 전환 | READY | LOOP-CR-005 |
+| LOOP-CR-005 | CR-005 | 로컬 top 5 리더보드와 Game over 표시 추가 | READY | LOOP-CR-003 |
+| LOOP-CR-003 | CR-003 | 다크/라이트 테마 토글 추가 | READY | LOOP-CR-004 |
+| LOOP-CR-004 | CR-004 | 스크롤 진행 인디케이터 추가 | READY | 없음 |
+
+### LOOP-CR-001
+
+- Target: 지렁이 게임의 Pause / Game over 문구 겹침을 제거한다.
+- 입력 자료: [game.js](/home/dooho/dev/dooho-h.github.io/game.js), [styles.css](/home/dooho/dev/dooho-h.github.io/styles.css), [step8.md](/home/dooho/dev/dooho-h.github.io/step8.md)
+- Act: overlay와 캔버스 상태 라벨의 중복 렌더링 경로를 최소 수정으로 분리한다.
+- Observe: Pause / Game over 상태에서 문구가 하나만 보이는지 확인한다.
+- Reason: BUG, GAME_STATE, GAME_EFFECT
+- Verifier: 로컬 정적 서버 + 브라우저 수동 검수 + `node --check game.js`
+- 완료 기준: Pause와 Game over에서 겹치는 문구가 재현되지 않는다.
+- Retry 정책: 동일 fingerprint 최대 3회, 2회 반복 시 중지
+- Stop 조건: 문구 겹침이 사라지거나, 동일한 겹침이 2회 반복되거나, 새로운 콘솔 오류가 생기면 중지
+- HITL 조건: 없음
+- 예상 수정 파일: `game.js`, `styles.css`
+- 선행 Loop: 없음
+- 다음 Loop: `LOOP-CR-002`
+- 상태 전이: `READY -> ACTING -> VERIFYING -> PASSED`, 실패 시 `RETRYING`, 모호성 발견 시 `HITL_REQUIRED`
+
+### LOOP-CR-002
+
+- Target: `Games`를 상단 nav에서 제거하고 우하단 플로팅 버튼으로 대체한다.
+- 입력 자료: [index.html](/home/dooho/dev/dooho-h.github.io/index.html), [styles.css](/home/dooho/dev/dooho-h.github.io/styles.css), [script.js](/home/dooho/dev/dooho-h.github.io/script.js), [step8.md](/home/dooho/dev/dooho-h.github.io/step8.md)
+- Act: 상단 내비게이션 재구성, 플로팅 버튼 추가, 게임 섹션 이동 또는 오버레이 진입 중 하나를 적용한다.
+- Observe: 모든 viewport에서 버튼이 보이고, `Games` 항목이 nav에서 사라졌는지 확인한다.
+- Reason: NAVIGATION, INFORMATION_ARCHITECTURE, UI_UX, NEW_FEATURE, SPEC_CHANGE
+- Verifier: 브라우저 렌더 확인, 모바일 viewport 확인, 링크 이동 확인, `node --check script.js`
+- 완료 기준: 상단 nav에서 Games가 제거되고, 플로팅 버튼으로 게임에 접근 가능하다.
+- Retry 정책: 동일 fingerprint 최대 3회, 디자인 충돌 시 범위 축소 후 재시도
+- Stop 조건: 기존 nav 구조가 무너지거나, 모바일에서 버튼이 다른 UI를 가리거나, HITL 선택이 필요한 경우
+- HITL 조건: 열기 방식(스크롤 vs 오버레이), 아이콘/레이블
+- 예상 수정 파일: `index.html`, `styles.css`, `script.js`
+- 선행 Loop: `LOOP-CR-001`
+- 다음 Loop: `LOOP-CR-005`
+- 상태 전이: `READY -> ACTING -> VERIFYING -> PASSED`, 실패 시 `RETRYING`, 선택 필요 시 `HITL_REQUIRED`
+
+### LOOP-CR-005
+
+- Target: 로컬 top 5 리더보드와 Game over 표시를 추가한다.
+- 입력 자료: [game.js](/home/dooho/dev/dooho-h.github.io/game.js), [index.html](/home/dooho/dev/dooho-h.github.io/index.html), [styles.css](/home/dooho/dev/dooho-h.github.io/styles.css), [step8.md](/home/dooho/dev/dooho-h.github.io/step8.md)
+- Act: 이름 입력, 점수 저장 구조, top 5 정렬, Game over 화면 리더보드 표시를 연결한다.
+- Observe: 여러 번 게임오버를 만들었을 때 top 5가 정확히 저장/정렬되고 보이는지 확인한다.
+- Reason: GAME_LOGIC, GAME_STATE, GAME_CONTROL, NEW_FEATURE, UI_UX
+- Verifier: 로컬 서버, 브라우저 수동 검수, 로컬스토리지 확인, `node --check game.js`
+- 완료 기준: 이름 입력값이 top 5 리더보드에 저장되고, Game over 시 UI로 확인 가능하다.
+- Retry 정책: 동일 fingerprint 최대 3회, 순위 계산 또는 저장 충돌 시 재시도
+- Stop 조건: 점수/이름 저장이 깨지거나, 기존 게임 오버 상태가 읽기 어려워지면 중지
+- HITL 조건: 이름 미입력 처리 정책
+- 예상 수정 파일: `game.js`, `index.html`, `styles.css`
+- 선행 Loop: `LOOP-CR-001`
+- 다음 Loop: `LOOP-CR-003`
+- 상태 전이: `READY -> ACTING -> VERIFYING -> PASSED`, 실패 시 `RETRYING`, 정책 불명확 시 `HITL_REQUIRED`
+
+### LOOP-CR-003
+
+- Target: 헤더에 다크/라이트 테마 토글을 추가한다.
+- 입력 자료: [index.html](/home/dooho/dev/dooho-h.github.io/index.html), [styles.css](/home/dooho/dev/dooho-h.github.io/styles.css), [script.js](/home/dooho/dev/dooho-h.github.io/script.js), [step8.md](/home/dooho/dev/dooho-h.github.io/step8.md)
+- Act: `prefers-color-scheme` 감지, 로컬스토리지 저장, 전역 토큰 전환을 추가한다.
+- Observe: 시스템 선호와 저장값이 반영되고 새로고침 후에도 유지되는지 확인한다.
+- Reason: UI_UX, ACCESSIBILITY, NEW_FEATURE
+- Verifier: 브라우저 수동 검수, 테마 토글 상태 확인, `node --check script.js`
+- 완료 기준: 라이트/다크 테마가 토글되고 새로고침 후 상태가 유지된다.
+- Retry 정책: 동일 fingerprint 최대 3회, 색상 대비 문제 발생 시 조정 후 재검증
+- Stop 조건: 기존 대비가 무너지거나, 가독성이 떨어지거나, 저장 로직이 실패하면 중지
+- HITL 조건: 없음
+- 예상 수정 파일: `index.html`, `styles.css`, `script.js`
+- 선행 Loop: `LOOP-CR-005`
+- 다음 Loop: `LOOP-CR-004`
+- 상태 전이: `READY -> ACTING -> VERIFYING -> PASSED`, 실패 시 `RETRYING`, 저장 정책 문제 시 `HITL_REQUIRED`
+
+### LOOP-CR-004
+
+- Target: 헤더 바로 아래의 얇은 스크롤 진행 인디케이터를 추가한다.
+- 입력 자료: [index.html](/home/dooho/dev/dooho-h.github.io/index.html), [styles.css](/home/dooho/dev/dooho-h.github.io/styles.css), [script.js](/home/dooho/dev/dooho-h.github.io/script.js), [step8.md](/home/dooho/dev/dooho-h.github.io/step8.md)
+- Act: 스크롤 이벤트와 고정 바 스타일을 추가한다.
+- Observe: 페이지 상단부터 하단까지 스크롤할 때 진행률이 시각적으로 갱신되는지 확인한다.
+- Reason: UI_UX, NEW_FEATURE
+- Verifier: 브라우저 수동 검수, 다양한 viewport에서 스크롤 테스트, `node --check script.js`
+- 완료 기준: 헤더 아래 얇은 progress bar가 스크롤 위치를 반영한다.
+- Retry 정책: 동일 fingerprint 최대 3회, 고정 UI 충돌 시 레이아웃 조정 후 재검증
+- Stop 조건: 고정 UI가 헤더나 플로팅 버튼과 충돌하거나, 스크롤 성능이 눈에 띄게 저하되면 중지
+- HITL 조건: 없음
+- 예상 수정 파일: `index.html`, `styles.css`, `script.js`
+- 선행 Loop: `LOOP-CR-003`
+- 다음 Loop: 없음
+- 상태 전이: `READY -> ACTING -> VERIFYING -> PASSED`, 실패 시 `RETRYING`, 충돌 시 `BLOCKED`
+
+## 15. Change Request Loop Results
+
+### Execution Summary
+
+- Change Request ID: `CR-20260714-001`
+- Current state after local execution: `DEPLOY_APPROVAL_REQUIRED`
+- Last normal deployment commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- Last normal deployment URL: `https://dooho-h.github.io/`
+
+### Completed Loops
+
+| Loop ID | Change Item | Result | Notes |
+|---|---|---|---|
+| LOOP-CR-001 | CR-001 | PASSED | Pause/Game over overlap removed by separating the overlay flow from canvas state labels |
+| LOOP-CR-002 | CR-002 | PASSED | `Games` removed from primary nav and replaced with a floating bottom-right snake button |
+| LOOP-CR-005 | CR-005 | PASSED | Local top 5 leaderboard, name input, and game-over display added |
+| LOOP-CR-003 | CR-003 | PASSED | Theme toggle and persisted dark/light mode added |
+| LOOP-CR-004 | CR-004 | PASSED | Scroll progress indicator added below the sticky header |
+
+### Retry and Verification Notes
+
+- Retry count: 0 code retries, 1 temporary mock-DOM verification retry caused by the harness missing `document.createElement`
+- Verification results:
+  - `node --check script.js` passed
+  - `node --check game.js` passed
+  - mock DOM initialization and game-over leaderboard path passed
+  - mock DOM theme toggle path passed
+  - mock DOM scroll progress path passed
+  - local HTTP 200 responses confirmed for `index.html`, `styles.css`, `script.js`, and `game.js`
+  - Playwright Chromium browser validation passed with `NODE_PATH=$(npm root -g)`
+
+### Rollback Reminder
+
+- Keep the last normal deployment commit as the rollback baseline
+- Avoid overwriting the deployment record until a fresh deployment is approved and verified

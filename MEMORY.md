@@ -165,26 +165,181 @@
 
 - Claude Code CLI 모델: `Claude Sonnet 5 (claude-sonnet-5)`
 - 브라우저 자동화: Playwright Chromium via global install
+- Node에서 `require('playwright')`를 쓸 때는 `NODE_PATH=$(npm root -g)`가 필요할 수 있음
 
-## Execution Log - Deployment
+## Change Request Intake - CR-20260714-001
 
-- Loop ID: `deploy-1`
-- 시작 시각: `2026-07-14`
-- 목표: GitHub Pages 최초 배포 및 라이브 사이트 검증
+### Baseline
+
+- 마지막 정상 배포 commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- 마지막 정상 배포 URL: `https://dooho-h.github.io/`
+
+### Request Summary
+
+- 사용자 요청 요약: 지렁이 게임의 Pause/Game over 문구 겹침 버그를 고치고, Games 진입을 플로팅 버튼으로 숨긴 뒤, 다크/라이트 테마 토글, 스크롤 진행 인디케이터, 로컬 top 5 리더보드를 추가한다.
+- 새로운 전체 Change Request ID: `CR-20260714-001`
+
+### Change Items
+
+- CR-001: 지렁이 게임 Game over / Pause 문구 겹침 버그 수정
+- CR-002: Games 탭 제거 후 우하단 플로팅 진입 버튼으로 대체
+- CR-003: 다크/라이트 테마 토글 추가
+- CR-004: 스크롤 진행 인디케이터 추가
+- CR-005: 로컬 top 5 리더보드와 게임오버 표시 추가
+
+### Reference Materials
+
+- [step8.md](/home/dooho/dev/dooho-h.github.io/step8.md)
+- [AORR.md](/home/dooho/dev/dooho-h.github.io/AORR.md)
+- [README.md](/home/dooho/dev/dooho-h.github.io/README.md)
+- 현재 소스 파일: `index.html`, `styles.css`, `script.js`, `game.js`
+
+### Current State
+
+- 현재 요청 상태: `CHANGE_PLANNED`
+- 기준선은 기존 정상 배포 상태로 고정
+- 현재 Git 상태: `main` 브랜치, `origin/main` 추적, untracked `step8.md`
+
+### New Acceptance Criteria
+
+- CR-001: Pause/Game over 상태에서 문구 겹침이 재현되지 않는다
+- CR-002: `Games` 탭이 nav에서 사라지고 플로팅 버튼으로 게임 진입 가능하다
+- CR-003: 라이트/다크 테마가 시스템 선호와 저장값에 따라 전환된다
+- CR-004: 헤더 아래 스크롤 진행 바가 현재 위치를 시각적으로 표시한다
+- CR-005: top 5 리더보드가 저장되고 Game over 시 표시된다
+
+### Loop Execution Order
+
+- 1순위: `LOOP-CR-001`
+- 2순위: `LOOP-CR-002`
+- 3순위: `LOOP-CR-005`
+- 4순위: `LOOP-CR-003`
+- 5순위: `LOOP-CR-004`
+
+### Next Step 9 Loop ID
+
+- `LOOP-CR-001`
+
+### Rollback Criteria
+
+- 새 오류가 기존 정상 배포 기준보다 커졌을 때
+- 동일 콘솔 예외나 동일 레이아웃 붕괴가 반복될 때
+- GitHub Pages 상대 경로가 깨질 때
+- 기존 게임 조작 또는 점수 표시가 망가질 때
+
+### HITL Items
+
+- CR-002: 플로팅 버튼의 열기 방식과 아이콘 선택
+- CR-003: 기본 다크 팔레트의 세부 톤
+- CR-005: 이름 미입력 처리 정책
+
+### Notes
+
+- 기존 배포 기록과 실행 로그는 유지한다
+- 기존 테스트 기록은 삭제하지 않는다
+- 배포나 코드 수정은 이 단계에서 수행하지 않는다
+
+## Change Request Execution - CR-20260714-001
+
+### Pre-change Baseline
+
+- 변경 전 commit hash: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- 마지막 정상 배포 commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- 마지막 정상 배포 URL: `https://dooho-h.github.io/`
+- 현재 Git 상태: `main...origin/main`, untracked `step8.md`
+- 기존 테스트 결과: `MEMORY.md`의 `loop-1`, `loop-2`, `deploy-1` 기록은 통과
+- 수정 전 웹사이트 상태: GitHub Pages 라이브 사이트는 HTTP 200, 현재 구현은 Games 탭 노출과 단일 라이트 테마, 스크롤 인디케이터 없음, 로컬 리더보드는 없음
+- 수정 전 게임 상태: Pause/Game over overlay 텍스트 중복 가능성, high score만 저장
+- Rollback 기준: 새 오류가 기존 정상 배포 기준보다 커질 때, 동일 콘솔 예외/레이아웃 붕괴가 반복될 때, GitHub Pages 상대 경로가 깨질 때, 기존 게임 조작 또는 점수 표시가 망가질 때
+
+### Loop Records
+
+- LOOP-CR-001
+  - Change Item ID: CR-001
+  - 시작 상태: `READY`
+  - 종료 상태: `PASSED`
+  - 가설: overlay와 canvas 상태 라벨을 분리하면 Pause/Game over 문구 겹침이 사라진다
+  - Act: 게임오버 및 일시정지 상태에서 overlay-only 메시지 흐름과 leaderboard 공간을 정리
+  - 변경 파일: `game.js`, `styles.css`
+  - Verifier: `node --check game.js`; mock DOM runtime validation
+  - 결과: 통과
+  - exit code: `0`
+  - 오류 fingerprint: 없음
+  - Retry 횟수: `0`
+  - 다음 Loop: `LOOP-CR-002`
+- LOOP-CR-002
+  - Change Item ID: CR-002
+  - 시작 상태: `READY`
+  - 종료 상태: `PASSED`
+  - 가설: Games를 nav에서 제거하고 floating button으로 대체하면 요청한 숨김 진입 방식이 성립한다
+  - Act: 상단 nav에서 Games 제거, theme toggle과 floating game entry 추가, sticky progress bar 레이아웃 확보
+  - 변경 파일: `index.html`, `script.js`, `styles.css`
+  - Verifier: local HTTP 200 checks; mock DOM initialization validation
+  - 결과: 통과
+  - exit code: `0`
+  - 오류 fingerprint: 없음
+  - Retry 횟수: `0`
+  - 다음 Loop: `LOOP-CR-005`
+- LOOP-CR-005
+  - Change Item ID: CR-005
+  - 시작 상태: `READY`
+  - 종료 상태: `PASSED`
+  - 가설: leaderboard 저장/렌더 경로를 추가하면 gameover 시 top 5 local ranking을 노출할 수 있다
+  - Act: player name input, save score action, leaderboard storage/rendering 추가
+  - 변경 파일: `game.js`, `index.html`, `styles.css`
+  - Verifier: mock DOM runtime validation; leaderboard save/render path validation
+  - 결과: 통과
+  - exit code: `0`
+  - 오류 fingerprint: 없음
+  - Retry 횟수: `0`
+  - 다음 Loop: `LOOP-CR-003`
+- LOOP-CR-003
+  - Change Item ID: CR-003
+  - 시작 상태: `READY`
+  - 종료 상태: `PASSED`
+  - 가설: theme token과 persisted toggle을 추가하면 light-only 고정을 해제할 수 있다
+  - Act: theme toggle, prefers-color-scheme detection, theme-color meta update 추가
+  - 변경 파일: `index.html`, `script.js`, `styles.css`
+  - Verifier: mock DOM theme toggle validation
+  - 결과: 통과
+  - exit code: `0`
+  - 오류 fingerprint: 없음
+  - Retry 횟수: `0`
+  - 다음 Loop: `LOOP-CR-004`
+- LOOP-CR-004
+  - Change Item ID: CR-004
+  - 시작 상태: `READY`
+  - 종료 상태: `PASSED`
+  - 가설: sticky header 아래 progress bar를 추가하고 scroll listener를 갱신하면 진행률을 시각화할 수 있다
+  - Act: scroll progress indicator와 rAF 기반 scroll handler 추가
+  - 변경 파일: `index.html`, `script.js`, `styles.css`
+  - Verifier: mock DOM scroll validation
+  - 결과: 통과
+  - exit code: `0`
+  - 오류 fingerprint: 없음
+  - Retry 횟수: `0`
+  - 다음 Loop: 없음
+
+### Current State Update
+
+- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
+- 현재 정상 commit 후보: `02d007c1fa1b51014096b0f87eb8076835e90d42` with local uncommitted changes pending review
+- 배포 전 rollback 기준: 마지막 정상 배포 commit과 URL 유지
+
+## Playwright Verification Loop
+
+- Loop ID: `playwright-verify-1`
+- 대상 Change Item: `CR-001`, `CR-002`, `CR-003`, `CR-004`, `CR-005`
 - 시작 상태: `DEPLOY_APPROVAL_REQUIRED`
-- 가설: main 브랜치 push 후 GitHub Pages가 최신 정적 파일을 배포한다
-- Act: `git commit` 생성 후 `git push origin main` 실행
-- 변경 파일: 없음, 이미 구현된 파일의 배포만 수행
-- Verifier: `curl -I https://dooho-h.github.io`; `curl -I https://dooho-h.github.io/index.html`; `curl -I https://dooho-h.github.io/styles.css`; `curl -I https://dooho-h.github.io/script.js`; `curl -I https://dooho-h.github.io/game.js`; `NODE_PATH=$(npm root -g) node /tmp/verify_portfolio_live.js`
-- 테스트 결과: 통과
+- 종료 상태: `PASSED`
+- 가설: 전역 설치된 Playwright를 `NODE_PATH=$(npm root -g)`와 함께 쓰면 브라우저 레벨에서 현재 변경사항을 직접 검증할 수 있다
+- Act: `chromium` headless로 `http://127.0.0.1:8124/`를 열고 nav, floating button, theme toggle, scroll progress, leaderboard UI를 확인
+- 변경 파일: 없음
+- Verifier: Playwright Chromium via `NODE_PATH=$(npm root -g) node`
+- 결과: 통과
 - exit code: `0`
 - 오류 fingerprint: 없음
 - Retry 횟수: `0`
-- 종료 상태: `DEPLOYED`
-- 다음 작업: 없음
-- 사람 확인 필요 항목: 실제 개인 프로필 / 경력 / 프로젝트 / 연락처 값
-
-## Tool Notes
-
-- Claude Code CLI 모델: `Claude Sonnet 5 (claude-sonnet-5)`
-- 브라우저 자동화: Playwright Chromium via global install
+- 다음 Loop: 없음
+- 사람 확인 필요 항목: 없음
+- 브라우저 관찰: scroll progress bar width changed from `0px` at top to `54.3281px` after scrolling to the bottom

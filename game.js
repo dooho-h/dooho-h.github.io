@@ -1,13 +1,13 @@
 'use strict';
 
 (function () {
-  const STORAGE_KEY = 'dooho-h-snake-high-score';
+  const HIGH_SCORE_KEY = 'dooho-h-snake-high-score';
+  const LEADERBOARD_KEY = 'dooho-h-snake-leaderboard';
+  const PLAYER_NAME_KEY = 'dooho-h-snake-player-name';
   const GRID_SIZE = 20;
-  const CELL_COLOR = '#63f1aa';
   const HEAD_COLOR = '#f8ff7a';
   const FOOD_COLOR = '#ff7d6a';
   const BODY_COLOR = '#2fcf8b';
-  const GRID_LINE = 'rgba(255,255,255,0.08)';
   const BG_COLOR = '#09111d';
 
   function createStorageFallback() {
@@ -18,6 +18,9 @@
       },
       setItem(key, value) {
         store.set(key, String(value));
+      },
+      removeItem(key) {
+        store.delete(key);
       }
     };
   }
@@ -40,6 +43,7 @@
       this.board = root.querySelector('[data-game-board]');
       this.stage = root.querySelector('[data-game-stage]');
       this.overlay = root.querySelector('[data-game-overlay]');
+      this.overlayTitle = root.querySelector('.overlay-title');
       this.message = root.querySelector('[data-game-message]');
       this.scoreNode = root.querySelector('[data-score]');
       this.highScoreNode = root.querySelector('[data-high-score]');
@@ -47,23 +51,29 @@
       this.startButton = root.querySelector('[data-action="start"]');
       this.pauseButton = root.querySelector('[data-action="pause"]');
       this.restartButton = root.querySelector('[data-action="restart"]');
+      this.saveButton = root.querySelector('[data-action="save-score"]');
+      this.nameInput = root.querySelector('[data-player-name]');
+      this.resultsPanel = root.querySelector('[data-game-results]');
+      this.leaderboardList = root.querySelector('[data-leaderboard]');
+      this.leaderboardStatus = root.querySelector('[data-leaderboard-status]');
+      this.leaderboardEmpty = root.querySelector('[data-leaderboard-empty]');
       this.section = root.closest('#games') || document;
       this.directionButtons = [...this.section.querySelectorAll('[data-direction]')];
       this.ctx = this.board.getContext('2d');
       this.storage = getStorage();
       this.resizeObserver = null;
       this.loopTimer = null;
-      this.isVisible = true;
       this.gameState = 'idle';
       this.direction = { x: 1, y: 0 };
       this.nextDirection = { x: 1, y: 0 };
       this.snake = [];
       this.food = null;
       this.score = 0;
-      this.highScore = this.readHighScore();
+      this.highScore = 0;
       this.boardSize = 0;
       this.pointerStart = null;
-      this.initialized = false;
+      this.currentRunId = 0;
+      this.savedRunId = 0;
 
       this.handleKeyDown = this.handleKeyDown.bind(this);
       this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
@@ -74,19 +84,25 @@
       this.handleTouchStart = this.handleTouchStart.bind(this);
       this.handleTouchEnd = this.handleTouchEnd.bind(this);
       this.handleTouchCancel = this.handleTouchCancel.bind(this);
+      this.handleNameInput = this.handleNameInput.bind(this);
+      this.handleNameCommit = this.handleNameCommit.bind(this);
 
       this.bindEvents();
       this.reset(true);
       this.syncBoardSize();
+      this.updateLeaderboardView();
       this.render();
-      this.updateHud();
-      this.initialized = true;
     }
 
     bindEvents() {
       this.startButton?.addEventListener('click', () => this.start());
       this.pauseButton?.addEventListener('click', () => this.togglePause());
       this.restartButton?.addEventListener('click', () => this.restart());
+      this.saveButton?.addEventListener('click', () => this.saveCurrentScore(true));
+
+      this.nameInput?.addEventListener('input', this.handleNameInput);
+      this.nameInput?.addEventListener('change', this.handleNameInput);
+      this.nameInput?.addEventListener('keydown', this.handleNameCommit);
 
       this.directionButtons.forEach((button) => {
         button.addEventListener('click', () => {
@@ -123,7 +139,7 @@
     }
 
     readHighScore() {
-      const raw = this.storage.getItem(STORAGE_KEY);
+      const raw = this.storage.getItem(HIGH_SCORE_KEY);
       const value = Number.parseInt(raw || '0', 10);
       return Number.isFinite(value) ? value : 0;
     }
@@ -131,7 +147,52 @@
     writeHighScore(value) {
       this.highScore = value;
       try {
-        this.storage.setItem(STORAGE_KEY, String(value));
+        this.storage.setItem(HIGH_SCORE_KEY, String(value));
+      } catch {
+        /* storage fallback already covers this */
+      }
+    }
+
+    readLeaderboard() {
+      try {
+        const raw = this.storage.getItem(LEADERBOARD_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed
+          .map((entry) => ({
+            name: typeof entry?.name === 'string' ? entry.name : '',
+            score: Number.parseInt(entry?.score, 10),
+            savedAt: typeof entry?.savedAt === 'string' ? entry.savedAt : new Date(0).toISOString()
+          }))
+          .filter((entry) => entry.name && Number.isFinite(entry.score));
+      } catch {
+        return [];
+      }
+    }
+
+    writeLeaderboard(entries) {
+      try {
+        this.storage.setItem(LEADERBOARD_KEY, JSON.stringify(entries));
+      } catch {
+        /* storage fallback already covers this */
+      }
+    }
+
+    readPlayerName() {
+      const stored = this.storage.getItem(PLAYER_NAME_KEY);
+      return typeof stored === 'string' ? stored : '';
+    }
+
+    writePlayerName(name) {
+      try {
+        if (name) {
+          this.storage.setItem(PLAYER_NAME_KEY, name);
+        } else {
+          this.storage.removeItem(PLAYER_NAME_KEY);
+        }
       } catch {
         /* storage fallback already covers this */
       }
@@ -149,11 +210,20 @@
         { x: 7, y: 10 }
       ];
       this.food = this.spawnFood();
+      this.currentRunId += 1;
+      this.savedRunId = 0;
+
       if (!preserveHighScore) {
         this.writeHighScore(0);
+      } else {
+        const leaderboardBest = this.getLeaderboardBest();
+        this.highScore = Math.max(this.readHighScore(), leaderboardBest);
       }
+
+      this.setPlayerName(this.readPlayerName(), false);
       this.updateHud();
       this.updateOverlay('Ready to play', 'Start the game with the button or use arrow keys / WASD while the game panel is focused.');
+      this.setResultsVisibility(false);
     }
 
     start() {
@@ -161,10 +231,8 @@
         return;
       }
 
-      if (this.gameState === 'idle' || this.gameState === 'gameover') {
-        if (this.gameState === 'gameover') {
-          this.reset(true);
-        }
+      if (this.gameState === 'gameover') {
+        this.reset(true);
       }
 
       this.gameState = 'running';
@@ -228,11 +296,12 @@
     gameOver(reason) {
       this.gameState = 'gameover';
       this.clearLoop();
-      if (this.score > this.highScore) {
-        this.writeHighScore(this.score);
-      }
+      this.highScore = Math.max(this.highScore, this.score);
+      this.writeHighScore(this.highScore);
+      this.saveCurrentScore(false);
       this.updateHud();
       this.updateOverlay('Game over', reason || 'Hit Restart to try again.');
+      this.setResultsVisibility(true);
       this.render();
     }
 
@@ -378,11 +447,115 @@
       this.scheduleNextTick();
     }
 
+    getLeaderboardBest() {
+      const leaderboard = this.readLeaderboard();
+      return leaderboard.reduce((best, entry) => Math.max(best, entry.score), this.readHighScore());
+    }
+
+    sortLeaderboard(entries) {
+      return entries
+        .slice()
+        .sort((left, right) => {
+          if (right.score !== left.score) {
+            return right.score - left.score;
+          }
+
+          return new Date(left.savedAt).getTime() - new Date(right.savedAt).getTime();
+        })
+        .slice(0, 5);
+    }
+
+    saveCurrentScore(force = false) {
+      if (this.gameState !== 'gameover' && !force) {
+        return false;
+      }
+
+      if (this.savedRunId === this.currentRunId) {
+        return true;
+      }
+
+      const playerName = this.getPlayerName();
+      if (!playerName) {
+        if (this.leaderboardStatus) {
+          this.leaderboardStatus.textContent = 'Enter a name, then press Save score to record this run.';
+        }
+        this.nameInput?.focus({ preventScroll: true });
+        return false;
+      }
+
+      const entries = this.readLeaderboard();
+      const nextEntries = this.sortLeaderboard([
+        ...entries,
+        {
+          name: playerName,
+          score: this.score,
+          savedAt: new Date().toISOString()
+        }
+      ]);
+
+      this.writeLeaderboard(nextEntries);
+      this.savedRunId = this.currentRunId;
+      this.highScore = Math.max(this.highScore, this.score, this.getLeaderboardBest());
+      this.writeHighScore(this.highScore);
+      this.updateLeaderboardView();
+      this.updateHud();
+      this.setResultsVisibility(true);
+      if (this.leaderboardStatus) {
+        this.leaderboardStatus.textContent = `Saved ${playerName}'s score locally.`;
+      }
+      return true;
+    }
+
+    getPlayerName() {
+      return this.nameInput ? this.nameInput.value.trim() : '';
+    }
+
+    setPlayerName(name, persist = true) {
+      if (this.nameInput && this.nameInput.value !== name) {
+        this.nameInput.value = name;
+      }
+
+      if (persist) {
+        this.writePlayerName(name);
+      }
+    }
+
+    handleNameInput() {
+      const name = this.getPlayerName();
+      this.writePlayerName(name);
+      if (this.gameState === 'gameover') {
+        this.updateHud();
+      }
+    }
+
+    handleNameCommit(event) {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (this.gameState === 'gameover') {
+        this.saveCurrentScore(true);
+      }
+    }
+
     updateHud() {
       this.scoreNode.textContent = String(this.score);
       this.highScoreNode.textContent = String(this.highScore);
       this.stateNode.textContent = this.getStateLabel();
       this.pauseButton.textContent = this.gameState === 'paused' ? 'Resume' : 'Pause';
+      if (this.saveButton) {
+        this.saveButton.disabled = this.gameState !== 'gameover';
+      }
+
+      if (this.resultsPanel) {
+        this.resultsPanel.classList.toggle('is-hidden', this.gameState !== 'gameover');
+      }
+
+      if (this.leaderboardStatus && this.gameState !== 'gameover') {
+        this.leaderboardStatus.textContent = 'Top 5 local scores.';
+      }
     }
 
     getStateLabel() {
@@ -399,10 +572,62 @@
     }
 
     updateOverlay(title, message) {
-      this.overlay.querySelector('.overlay-title').textContent = title;
-      this.message.textContent = message;
+      if (this.overlayTitle) {
+        this.overlayTitle.textContent = title;
+      }
+
+      if (this.message) {
+        this.message.textContent = message;
+      }
+
       const shouldHide = this.gameState === 'running';
       this.overlay.classList.toggle('is-hidden', shouldHide);
+    }
+
+    setResultsVisibility(isVisible) {
+      if (!this.resultsPanel) {
+        return;
+      }
+
+      this.resultsPanel.classList.toggle('is-hidden', !isVisible);
+      this.resultsPanel.hidden = !isVisible;
+    }
+
+    updateLeaderboardView() {
+      if (!this.leaderboardList || !this.leaderboardEmpty) {
+        return;
+      }
+
+      const entries = this.readLeaderboard();
+      this.leaderboardList.innerHTML = '';
+
+      if (entries.length === 0) {
+        this.leaderboardEmpty.hidden = false;
+        this.leaderboardList.hidden = true;
+        if (this.leaderboardStatus) {
+          this.leaderboardStatus.textContent = 'No scores yet. Enter a name and save a run.';
+        }
+        return;
+      }
+
+      this.leaderboardEmpty.hidden = true;
+      this.leaderboardList.hidden = false;
+
+      entries.forEach((entry, index) => {
+        const item = document.createElement('li');
+        const name = document.createElement('strong');
+        const meta = document.createElement('span');
+
+        name.textContent = `${index + 1}. ${entry.name}`;
+        meta.className = 'leaderboard__meta';
+        meta.textContent = ` ${entry.score}`;
+        item.append(name, meta);
+        this.leaderboardList.append(item);
+      });
+
+      const best = entries[0];
+      this.highScore = Math.max(this.highScore, best?.score || 0);
+      this.highScoreNode.textContent = String(this.highScore);
     }
 
     syncBoardSize() {
@@ -446,14 +671,10 @@
       this.drawGrid(ctx, size, cell);
       this.drawFood(ctx, cell);
       this.drawSnake(ctx, cell);
-
-      if (this.gameState !== 'running') {
-        this.drawStateLabel(ctx, size);
-      }
     }
 
     drawGrid(ctx, size, cell) {
-      ctx.strokeStyle = GRID_LINE;
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let i = 1; i < GRID_SIZE; i += 1) {
@@ -467,8 +688,7 @@
     }
 
     drawSnake(ctx, cell) {
-      const segments = this.snake;
-      segments.forEach((segment, index) => {
+      this.snake.forEach((segment, index) => {
         const padding = index === 0 ? cell * 0.1 : cell * 0.16;
         const x = segment.x * cell + padding;
         const y = segment.y * cell + padding;
@@ -489,25 +709,6 @@
       ctx.fillStyle = FOOD_COLOR;
       this.roundRect(ctx, this.food.x * cell + padding, this.food.y * cell + padding, size, size, Math.max(4, size * 0.3));
       ctx.fill();
-    }
-
-    drawStateLabel(ctx, size) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(8, 17, 28, 0.35)';
-      ctx.fillRect(0, 0, size, size);
-      ctx.fillStyle = '#ffffff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.font = '700 28px Georgia, Times New Roman, serif';
-      ctx.fillText(this.getStateLabel(), size / 2, size / 2 - 16);
-      ctx.font = '500 16px Avenir Next, Trebuchet MS, sans-serif';
-      const message = this.gameState === 'paused'
-        ? 'Use Resume to continue.'
-        : this.gameState === 'gameover'
-          ? 'Hit Restart to play again.'
-          : 'Press Start.';
-      ctx.fillText(message, size / 2, size / 2 + 18);
-      ctx.restore();
     }
 
     roundRect(ctx, x, y, width, height, radius) {
@@ -555,8 +756,10 @@
 
       if (key === 'enter') {
         event.preventDefault();
-        if (this.gameState === 'idle' || this.gameState === 'gameover') {
+        if (this.gameState === 'idle') {
           this.start();
+        } else if (this.gameState === 'gameover') {
+          this.saveCurrentScore(true);
         }
       }
     }

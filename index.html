@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light only">
+  <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f4efe7">
   <title>dooho-h | Professional Portfolio</title>
   <link rel="stylesheet" href="styles.css">
@@ -16,17 +16,25 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#home" aria-label="dooho-h home">dooho-h</a>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
-        Menu
-      </button>
+      <div class="header-actions">
+        <button class="theme-toggle" type="button" aria-pressed="false" aria-label="Enable dark theme" data-theme-toggle>
+          <span class="theme-toggle__icon" aria-hidden="true">◐</span>
+          <span class="theme-toggle__label">Theme</span>
+        </button>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+          Menu
+        </button>
+      </div>
       <nav class="site-nav" id="primary-navigation" aria-label="Primary">
         <a href="#home">Home</a>
         <a href="#about">About</a>
         <a href="#experience">Experience</a>
         <a href="#projects">Projects</a>
         <a href="#contact">Contact</a>
-        <a href="#games">Games</a>
       </nav>
+    </div>
+    <div class="scroll-progress" aria-hidden="true">
+      <span class="scroll-progress__bar" data-scroll-progress></span>
     </div>
   </header>
 
@@ -41,7 +49,6 @@
           </p>
           <div class="hero-actions">
             <a class="button button-primary" href="#projects">View Projects</a>
-            <a class="button button-secondary" href="#games">Open Games</a>
           </div>
         </div>
         <aside class="hero-card card">
@@ -181,11 +188,25 @@
               <span>Status: <strong data-game-state>Idle</strong></span>
             </div>
 
+            <label class="game-name" for="player-name">
+              <span>Name for leaderboard</span>
+              <input
+                id="player-name"
+                class="game-name__input"
+                type="text"
+                maxlength="18"
+                autocomplete="nickname"
+                spellcheck="false"
+                placeholder="Enter a name"
+                data-player-name
+              >
+            </label>
+
             <div class="game-stage" data-game-stage>
               <canvas data-game-board aria-label="Snake game board"></canvas>
               <div class="game-overlay" data-game-overlay>
                 <p class="overlay-title">Ready to play</p>
-                <p data-game-message>Start the game with the button or by pressing an arrow key while focused here.</p>
+                <p class="overlay-message" data-game-message>Start the game with the button or by pressing an arrow key while focused here.</p>
               </div>
             </div>
 
@@ -193,7 +214,17 @@
               <button type="button" class="button button-primary" data-action="start">Start</button>
               <button type="button" class="button button-secondary" data-action="pause">Pause</button>
               <button type="button" class="button button-secondary" data-action="restart">Restart</button>
+              <button type="button" class="button button-secondary" data-action="save-score">Save score</button>
             </div>
+
+            <section class="game-results card is-hidden" data-game-results aria-live="polite">
+              <div class="game-results__header">
+                <h3>Leaderboard</h3>
+                <p data-leaderboard-status>Top 5 local scores.</p>
+              </div>
+              <ol class="leaderboard" data-leaderboard></ol>
+              <p class="game-results__empty" data-leaderboard-empty>No scores yet.</p>
+            </section>
           </div>
 
           <div class="card game-help">
@@ -217,5 +248,7 @@
       </div>
     </section>
   </main>
+
+  <a class="floating-game-button" href="#games" aria-label="Jump to the snake game section">🐍</a>
 </body>
 </html>
