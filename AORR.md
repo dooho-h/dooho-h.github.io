@@ -437,10 +437,11 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
 ### Execution Summary
 
 - Change Request ID: `CR-20260714-002`
-- Current state after local execution: `DEPLOY_APPROVAL_REQUIRED`
+- Current state after local execution: `DEPLOYED`
 - Baseline commit before change: `7b9249eccaaf140d4f1339fabe37a9c2bf5f58c9`
 - Last normal deployment commit: `05638e00e854848d74ceed4fd89f997a852165f5`
 - Last normal deployment URL: `https://dooho-h.github.io/`
+- Deployed commit for CR-20260714-002: `dc145af7f0d0b16eec84275e612cf804d655c81c`
 
 ### Completed Loops
 
@@ -455,7 +456,7 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
   - `node --check game.js` passed
   - Playwright input verification passed: `wasd` and `abc` were fully entered in the name field
   - Game panel keyboard regression passed: `ArrowUp` on the focused game panel yielded `gameState=running` and `nextDirection={x:0,y:-1}`
-- Final local state: `DEPLOY_APPROVAL_REQUIRED`
+- Final local state: `DEPLOYED`
 
 ### Rollback Reminder
 

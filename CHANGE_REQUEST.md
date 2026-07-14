@@ -355,8 +355,8 @@
 
 ### 11.6 현재 상태
 
-- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
-- 다음 단계: 사용자가 재배포를 승인하면 커밋/푸시/재배포 수행
+- 현재 상태: `DEPLOYED`
+- 다음 단계: 없음
 
 ### 11.7 Execution Update
 
@@ -368,3 +368,10 @@
 - 수정 후 테스트: 이름 입력칸에 `wasd`와 `abc`를 입력했을 때 각각 `wasd`, `abc`가 온전히 입력됨; 게임 패널 포커스 상태에서 `ArrowUp` 입력 시 `gameState=running`, `nextDirection=(0,-1)` 확인
 - 회귀 테스트: 기존 게임 시작/일시정지/재시작/게임오버, 키보드 조작, 모바일 조작, 점수 저장, 리더보드, 브라우저 콘솔, GitHub Pages 상대 경로
 - 사람 확인 필요 항목: 없음
+
+### 11.8 Deployment Update
+
+- 배포 상태: `DEPLOYED`
+- 배포 commit: `dc145af7f0d0b16eec84275e612cf804d655c81c`
+- 배포 URL: `https://dooho-h.github.io/`
+- 배포 후 검증: GitHub Pages에서 `wasd` 입력이 온전히 저장되고, 게임 패널 포커스 시 `ArrowUp` 조작이 유지됨

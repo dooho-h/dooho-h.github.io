@@ -403,4 +403,16 @@
 - 현재 정상 commit 후보: 변경 사항은 아직 커밋하지 않음
 - Rollback 기준: 이름 입력이 다시 깨지거나, 기존 게임 조작/리더보드/테마/스크롤 기능에 회귀가 생기면 수정 전 상태로 되돌리는 방향으로 검토
 - 브라우저 관찰: name input accepted `wasd` and `abc`; focused game panel accepted `ArrowUp` and moved into running state
-- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
+- 현재 상태: `DEPLOYED`
+
+## Deployment Record - CR-20260714-002
+
+- Deployment status: `DEPLOYED`
+- Deployed commit: `dc145af7f0d0b16eec84275e612cf804d655c81c`
+- Deployed URL: `https://dooho-h.github.io/`
+- Deployment verification:
+  - GitHub Pages HTTP 200 confirmed
+  - Playwright browser validation on live site passed with no console errors
+  - Live input verification passed: name field accepted `wasd`
+  - Live game-panel keyboard verification passed: `ArrowUp` moved the game to running state
+- Remaining manual blockers: 없음
