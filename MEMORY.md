@@ -244,7 +244,7 @@
 ### Pre-change Baseline
 
 - 변경 전 commit hash: `02d007c1fa1b51014096b0f87eb8076835e90d42`
-- 마지막 정상 배포 commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- 마지막 정상 배포 commit: `05638e00e854848d74ceed4fd89f997a852165f5`
 - 마지막 정상 배포 URL: `https://dooho-h.github.io/`
 - 현재 Git 상태: `main...origin/main`, untracked `step8.md`
 - 기존 테스트 결과: `MEMORY.md`의 `loop-1`, `loop-2`, `deploy-1` 기록은 통과
@@ -322,8 +322,8 @@
 
 ### Current State Update
 
-- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
-- 현재 정상 commit 후보: `02d007c1fa1b51014096b0f87eb8076835e90d42` with local uncommitted changes pending review
+- 현재 상태: `DEPLOYED`
+- 현재 정상 commit 후보: `05638e00e854848d74ceed4fd89f997a852165f5`
 - 배포 전 rollback 기준: 마지막 정상 배포 commit과 URL 유지
 
 ## Playwright Verification Loop
@@ -343,3 +343,14 @@
 - 다음 Loop: 없음
 - 사람 확인 필요 항목: 없음
 - 브라우저 관찰: scroll progress bar width changed from `0px` at top to `54.3281px` after scrolling to the bottom
+
+## Deployment Record - CR-20260714-001
+
+- Deployment status: `DEPLOYED`
+- Deployed commit: `05638e00e854848d74ceed4fd89f997a852165f5`
+- Deployed URL: `https://dooho-h.github.io/`
+- Deployment verification:
+  - GitHub Pages HTTP 200 confirmed
+  - GitHub Pages HTML includes `theme-toggle`, `scroll-progress`, `floating-game-button`, `data-player-name`, and `data-leaderboard`
+  - Playwright browser validation on live site passed with no console errors
+- Remaining manual blockers: 없음

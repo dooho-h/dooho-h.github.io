@@ -378,8 +378,8 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
 ### Execution Summary
 
 - Change Request ID: `CR-20260714-001`
-- Current state after local execution: `DEPLOY_APPROVAL_REQUIRED`
-- Last normal deployment commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
+- Current state after local execution: `DEPLOYED`
+- Last normal deployment commit: `05638e00e854848d74ceed4fd89f997a852165f5`
 - Last normal deployment URL: `https://dooho-h.github.io/`
 
 ### Completed Loops
@@ -403,6 +403,9 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
   - mock DOM scroll progress path passed
   - local HTTP 200 responses confirmed for `index.html`, `styles.css`, `script.js`, and `game.js`
   - Playwright Chromium browser validation passed with `NODE_PATH=$(npm root -g)`
+- Final deployment result: `DEPLOYED`
+- Last normal deployment commit: `05638e00e854848d74ceed4fd89f997a852165f5`
+- Last normal deployment URL: `https://dooho-h.github.io/`
 
 ### Rollback Reminder
 

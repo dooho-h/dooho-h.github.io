@@ -3,7 +3,7 @@
 - 전체 Change Request ID: `CR-20260714-001`
 - 기준선 commit: `02d007c1fa1b51014096b0f87eb8076835e90d42`
 - 기준선 배포 URL: `https://dooho-h.github.io/`
-- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
+- 현재 상태: `DEPLOYED`
 - 기준선 설명: 마지막 정상 배포 상태를 변경 전 기준선으로 사용
 
 ## 0. 현재 상태 확인
@@ -244,9 +244,9 @@
 
 ## 9. 현재 상태
 
-- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
-- 기준선은 `02d007c1fa1b51014096b0f87eb8076835e90d42`
-- 다음 단계는 배포 승인 대기
+- 현재 상태: `DEPLOYED`
+- 기준선은 `05638e00e854848d74ceed4fd89f997a852165f5`
+- 다음 단계는 없음
 
 ## 10. Execution Update
 
@@ -254,17 +254,18 @@
 
 | Change Item ID | Status | Actual Modified Files | Test Results | Retry Count |
 |---|---|---|---|---|
-| CR-001 | PASSED | `game.js`, `styles.css` | `node --check game.js` passed; mock DOM runtime passed; gameover overlay and leaderboard rendering path passed | 0 |
-| CR-002 | PASSED | `index.html`, `script.js`, `styles.css` | nav removed from visible menu; floating game button present; local HTML response includes the new anchor | 0 |
-| CR-003 | PASSED | `index.html`, `script.js`, `styles.css` | theme toggle initialization passed; dark theme toggle path passed in mock DOM; local HTML response includes toggle | 0 |
-| CR-004 | PASSED | `index.html`, `script.js`, `styles.css` | scroll progress bar path passed in mock DOM; local HTML response includes progress bar | 0 |
-| CR-005 | PASSED | `index.html`, `game.js`, `styles.css` | leaderboard save/render path passed; mock DOM runtime passed; local HTML response includes leaderboard UI | 0 |
+| CR-001 | DEPLOYED | `game.js`, `styles.css` | `node --check game.js` passed; mock DOM runtime passed; Playwright browser validation passed; deployed site verified | 0 |
+| CR-002 | DEPLOYED | `index.html`, `script.js`, `styles.css` | nav removed from visible menu; floating game button present; deployed site verified | 0 |
+| CR-003 | DEPLOYED | `index.html`, `script.js`, `styles.css` | theme toggle initialization passed; dark theme toggle path passed; deployed site verified | 0 |
+| CR-004 | DEPLOYED | `index.html`, `script.js`, `styles.css` | scroll progress bar path passed; browser scroll validation passed; deployed site verified | 0 |
+| CR-005 | DEPLOYED | `index.html`, `game.js`, `styles.css` | leaderboard save/render path passed; Playwright browser validation passed; deployed site verified | 0 |
 
 ### Completed Validation
 
 - 수정 전 재현: 현재 화면과 코드 기준으로 Games nav 노출, light-only 테마, progress bar 부재, leaderboard 부재, gameover/pause 문구 중복 가능성 확인
 - 수정 후 테스트: `node --check script.js`; `node --check game.js`; mock DOM runtime validation; scroll progress validation; local HTTP 200 responses for `index.html`, `styles.css`, `script.js`, `game.js`
 - 브라우저 검증: Playwright Chromium으로 `nav`, 플로팅 버튼, 테마 토글, 스크롤 진행 바, 로컬 리더보드 경로 확인
+- 배포 검증: `https://dooho-h.github.io/` 에서 새 마크업과 UI 요소 확인
 - 회귀 테스트: 홈/소개/경력/프로젝트/연락처 섹션, nav, mobile nav, floating game entry, keyboard input, mobile input, score display, leaderboard display, GitHub Pages 상대 경로
 
 ### Person-in-the-loop
