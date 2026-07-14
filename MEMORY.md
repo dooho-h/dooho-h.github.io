@@ -40,13 +40,13 @@
 
 ## Current State
 
-- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
+- 현재 상태: `DEPLOYED`
 - 완료한 루프: 2회차까지 완료
-- 다음 루프: 사용자 배포 승인 대기
+- 다음 루프: 없음
 - 현재 Retry 횟수: 2
 - 현재 오류 fingerprint: 없음
 - Blocker: 없음
-- 마지막 정상 상태: `NODE_PATH=$(npm root -g) node /tmp/verify_portfolio.js` 최종 통과 상태
+- 마지막 정상 상태: GitHub Pages 라이브 사이트 검증 통과
 
 ## Guardrails
 
@@ -166,3 +166,25 @@
 - Claude Code CLI 모델: `Claude Sonnet 5 (claude-sonnet-5)`
 - 브라우저 자동화: Playwright Chromium via global install
 
+## Execution Log - Deployment
+
+- Loop ID: `deploy-1`
+- 시작 시각: `2026-07-14`
+- 목표: GitHub Pages 최초 배포 및 라이브 사이트 검증
+- 시작 상태: `DEPLOY_APPROVAL_REQUIRED`
+- 가설: main 브랜치 push 후 GitHub Pages가 최신 정적 파일을 배포한다
+- Act: `git commit` 생성 후 `git push origin main` 실행
+- 변경 파일: 없음, 이미 구현된 파일의 배포만 수행
+- Verifier: `curl -I https://dooho-h.github.io`; `curl -I https://dooho-h.github.io/index.html`; `curl -I https://dooho-h.github.io/styles.css`; `curl -I https://dooho-h.github.io/script.js`; `curl -I https://dooho-h.github.io/game.js`; `NODE_PATH=$(npm root -g) node /tmp/verify_portfolio_live.js`
+- 테스트 결과: 통과
+- exit code: `0`
+- 오류 fingerprint: 없음
+- Retry 횟수: `0`
+- 종료 상태: `DEPLOYED`
+- 다음 작업: 없음
+- 사람 확인 필요 항목: 실제 개인 프로필 / 경력 / 프로젝트 / 연락처 값
+
+## Tool Notes
+
+- Claude Code CLI 모델: `Claude Sonnet 5 (claude-sonnet-5)`
+- 브라우저 자동화: Playwright Chromium via global install
