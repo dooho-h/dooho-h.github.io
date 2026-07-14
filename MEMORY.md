@@ -239,6 +239,36 @@
 - 기존 테스트 기록은 삭제하지 않는다
 - 배포나 코드 수정은 이 단계에서 수행하지 않는다
 
+## Change Request Execution - CR-20260714-002
+
+### Pre-change Baseline
+
+- 변경 전 commit hash: `7b9249eccaaf140d4f1339fabe37a9c2bf5f58c9`
+- 마지막 정상 배포 commit: `05638e00e854848d74ceed4fd89f997a852165f5`
+- 마지막 정상 배포 URL: `https://dooho-h.github.io/`
+- 현재 Git 상태: `main...origin/main`, untracked `step8.md`
+- 기존 테스트 결과: `node --check game.js`, `node --check script.js`, mock DOM validation, Playwright browser validation, local HTTP 200 checks all passed for CR-20260714-001
+- 수정 전 웹사이트 상태: 기존 배포본은 정상 동작하지만, 이름 입력칸에서 `WASD` / 방향키가 게임 단축키에 가로채일 가능성이 확인됨
+- 수정 전 게임 상태: 이름 입력칸에서 일부 키가 누락되는 입력 충돌 존재
+- Rollback 기준: 이름 입력이 더 깨지거나, 기존 게임 조작/리더보드/테마/스크롤 기능에 회귀가 발생하면 롤백 검토
+
+### Loop Records
+
+- LOOP-CR-006
+  - Change Item ID: CR-006
+  - 시작 상태: `READY`
+  - 종료 상태: `READY`
+  - 가설: 전역 keydown에서 편집 가능한 필드를 제외하면 이름 입력칸의 키보드 입력이 온전히 복구된다
+  - Act: 편집 가능한 요소 감지 헬퍼를 추가해 입력칸 포커스 중에는 게임 hotkey를 무시하도록 수정
+  - 변경 파일: `game.js`, `CHANGE_REQUEST.md`, `AORR.md`, `MEMORY.md`
+  - Verifier: `node --check game.js`; Playwright 입력 검증 예정
+  - 결과: 진행 중
+  - exit code: `pending`
+  - 오류 fingerprint: pending
+  - Retry 횟수: `0`
+  - 다음 Loop: 없음
+  - 사람 확인 필요 항목: 없음
+
 ## Change Request Execution - CR-20260714-001
 
 ### Pre-change Baseline
@@ -354,3 +384,23 @@
   - GitHub Pages HTML includes `theme-toggle`, `scroll-progress`, `floating-game-button`, `data-player-name`, and `data-leaderboard`
   - Playwright browser validation on live site passed with no console errors
 - Remaining manual blockers: 없음
+
+## Change Request Execution - CR-20260714-002
+
+- Loop ID: `LOOP-CR-006`
+- Change Item ID: `CR-006`
+- 시작 상태: `READY`
+- 종료 상태: `PASSED`
+- 가설: 전역 keydown에서 편집 가능한 필드를 제외하면 이름 입력칸의 키보드 입력이 온전히 복구된다
+- Act: 편집 가능한 요소 감지 헬퍼를 추가해 입력칸 포커스 중에는 게임 hotkey를 무시하도록 수정
+- 변경 파일: `game.js`, `CHANGE_REQUEST.md`, `AORR.md`, `MEMORY.md`
+- Verifier: `node --check game.js`; Playwright 입력 검증; 게임 패널 keyboard regression 검증
+- 결과: 통과
+- exit code: `0`
+- 오류 fingerprint: 없음
+- Retry 횟수: `0`
+- 다음 Loop: 없음
+- 현재 정상 commit 후보: 변경 사항은 아직 커밋하지 않음
+- Rollback 기준: 이름 입력이 다시 깨지거나, 기존 게임 조작/리더보드/테마/스크롤 기능에 회귀가 생기면 수정 전 상태로 되돌리는 방향으로 검토
+- 브라우저 관찰: name input accepted `wasd` and `abc`; focused game panel accepted `ArrowUp` and moved into running state
+- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`

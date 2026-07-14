@@ -411,3 +411,53 @@ Observe 단계는 실패 원인 분류에 필요한 증거를 모은다.
 
 - Keep the last normal deployment commit as the rollback baseline
 - Avoid overwriting the deployment record until a fresh deployment is approved and verified
+
+## Change Request Loop Plan - CR-20260714-002
+
+### LOOP-CR-006
+
+- Target: 이름 입력칸에서 게임 단축키가 텍스트 입력을 가로채지 않도록 한다.
+- 입력 자료: [game.js](/home/dooho/dev/dooho-h.github.io/game.js), [index.html](/home/dooho/dev/dooho-h.github.io/index.html), [CHANGE_REQUEST.md](/home/dooho/dev/dooho-h.github.io/CHANGE_REQUEST.md), [MEMORY.md](/home/dooho/dev/dooho-h.github.io/MEMORY.md)
+- Act: 전역 `keydown` 핸들러에서 편집 가능한 요소를 감지해, 이름 입력칸이 포커스된 동안에는 게임 단축키를 무시하도록 수정한다.
+- Observe: 이름 입력칸에 `wasd`와 방향키가 포함된 텍스트를 입력했을 때 입력값이 누락되지 않는지 확인한다.
+- Reason: BUG, GAME_CONTROL, ACCESSIBILITY, UI_UX
+- Verifier: 로컬 정적 서버, Playwright 입력 검증, `node --check game.js`
+- 완료 기준: 이름 입력칸에서 일반 텍스트와 `wasd` / 방향키 입력이 온전히 동작하고, 게임 패널 포커스 시 기존 조작은 유지된다.
+- Retry 정책: 동일 fingerprint 최대 3회, 동일 입력 누락이 2회 반복되면 중지
+- Stop 조건: 입력값 손상이 지속되거나, 게임 컨트롤 회귀가 발생하거나, 새로운 콘솔 오류가 생기면 중지
+- HITL 조건: 없음
+- 예상 수정 파일: `game.js`, `CHANGE_REQUEST.md`, `AORR.md`, `MEMORY.md`
+- 선행 Loop: 없음
+- 다음 Loop: 없음
+- 상태: `READY`
+- 상태 전이: `READY -> ACTING -> VERIFYING -> PASSED`, 실패 시 `RETRYING`, 반복 실패 시 `BLOCKED`
+
+## Change Request Loop Results - CR-20260714-002
+
+### Execution Summary
+
+- Change Request ID: `CR-20260714-002`
+- Current state after local execution: `DEPLOY_APPROVAL_REQUIRED`
+- Baseline commit before change: `7b9249eccaaf140d4f1339fabe37a9c2bf5f58c9`
+- Last normal deployment commit: `05638e00e854848d74ceed4fd89f997a852165f5`
+- Last normal deployment URL: `https://dooho-h.github.io/`
+
+### Completed Loops
+
+| Loop ID | Change Item | Result | Notes |
+|---|---|---|---|
+| LOOP-CR-006 | CR-006 | PASSED | Editable-field guard restored text input while preserving game-panel keyboard control |
+
+### Retry and Verification Notes
+
+- Retry count: 0 code retries
+- Verification results:
+  - `node --check game.js` passed
+  - Playwright input verification passed: `wasd` and `abc` were fully entered in the name field
+  - Game panel keyboard regression passed: `ArrowUp` on the focused game panel yielded `gameState=running` and `nextDirection={x:0,y:-1}`
+- Final local state: `DEPLOY_APPROVAL_REQUIRED`
+
+### Rollback Reminder
+
+- Revert the `isEditableTarget` guard first if the new input behavior causes regressions
+- Keep the leaderboard and theme changes untouched unless a separate regression appears

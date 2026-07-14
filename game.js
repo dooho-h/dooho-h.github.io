@@ -723,6 +723,11 @@
     }
 
     handleKeyDown(event) {
+      const target = event.target instanceof Element ? event.target : null;
+      if (this.isEditableTarget(target)) {
+        return;
+      }
+
       const key = event.key.toLowerCase();
       const captures = this.gameState !== 'idle' || this.root.contains(document.activeElement) || document.activeElement === this.board;
       const keyMap = {
@@ -762,6 +767,28 @@
           this.saveCurrentScore(true);
         }
       }
+    }
+
+    isEditableTarget(target) {
+      if (!target || !(target instanceof Element)) {
+        return false;
+      }
+
+      if (target.isContentEditable) {
+        return true;
+      }
+
+      const tagName = target.tagName;
+      if (tagName === 'TEXTAREA' || tagName === 'SELECT') {
+        return true;
+      }
+
+      if (tagName !== 'INPUT') {
+        return false;
+      }
+
+      const inputType = (target.getAttribute('type') || 'text').toLowerCase();
+      return !['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'].includes(inputType);
     }
 
     handleVisibilityChange() {

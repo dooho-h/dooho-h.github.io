@@ -271,3 +271,100 @@
 ### Person-in-the-loop
 
 - 없음
+
+## 11. Change Request Intake - CR-20260714-002
+
+- 전체 Change Request ID: `CR-20260714-002`
+- 기준선 commit: `7b9249eccaaf140d4f1339fabe37a9c2bf5f58c9`
+- 기준선 배포 URL: `https://dooho-h.github.io/`
+- 현재 상태: `READY`
+- 기준선 설명: 이전 배포 이후 새로 관찰된 키보드 입력 문제를 별도 Change Request로 분리
+
+### 11.1 사용자 요청 원문
+
+```text
+키보드로 입력이 안되는 것 같거든. 이 부분에 대한 CHANGE REQUEST 만들고 루프 실행해줘
+```
+
+### 11.2 Change Item 개요
+
+| Change Item ID | 요약 | 분류 | 위험도 | 배포 필요 여부 | 사람 확인 필요 |
+|---|---|---|---|---|---|
+| CR-006 | 이름 입력칸에서 게임 단축키가 키보드 입력을 가로채는 문제를 수정한다 | BUG, GAME_CONTROL, ACCESSIBILITY, UI_UX | MEDIUM | Yes | 없음 |
+
+### 11.3 Change Item
+
+| Field | Value |
+|---|---|
+| Change Item ID | CR-006 |
+| 사용자 요청 원문 | `키보드로 입력이 안되는 것 같거든. 이 부분에 대한 CHANGE REQUEST 만들고 루프 실행해줘` |
+| 요청 요약 | 이름 입력칸에서 키보드로 텍스트를 입력할 수 없게 만드는 게임 단축키 가로채기를 막는다. |
+| 요청 분류 | BUG, GAME_CONTROL, ACCESSIBILITY, UI_UX |
+| 현재 동작 | 이름 입력칸에 포커스가 있어도 전역 `keydown` 처리에서 `WASD`와 방향키가 게임 조작으로 소비되어 일부 문자가 입력되지 않는다. |
+| 기대 동작 | 이름 입력칸이 포커스된 동안에는 일반 텍스트 입력이 온전히 동작하고, 게임 단축키는 편집 가능한 필드에서 가로채지 않는다. |
+| 재현 방법 | 이름 입력칸을 클릭한 뒤 `wasd` 또는 화살표 키가 포함된 문자열을 입력한다. 현재는 해당 키가 누락되거나 입력값이 손상된다. |
+| 근거 자료 | [game.js](/home/dooho/dev/dooho-h.github.io/game.js), [index.html](/home/dooho/dev/dooho-h.github.io/index.html), [MEMORY.md](/home/dooho/dev/dooho-h.github.io/MEMORY.md), [AORR.md](/home/dooho/dev/dooho-h.github.io/AORR.md) |
+| 수정 대상 기능 | 전역 키보드 핸들링, 이름 입력 폼, 게임 단축키 충돌 처리 |
+| 예상 수정 파일 | `game.js`, `CHANGE_REQUEST.md`, `AORR.md`, `MEMORY.md` |
+| 변경 허용 범위 | 전역 `keydown` 필터링, 편집 가능 요소 판별, 검증 기록 업데이트 |
+| 변경 금지 범위 | 게임 점수 규칙, 리더보드 저장 구조, 테마/스크롤/네비게이션 기능, 외부 서비스 추가 |
+| 선행 작업 | 실제로 어떤 키가 입력을 막는지 브라우저에서 재현한다. |
+| 후속 작업 | 게임 조작이 이름 입력 중에만 무시되고, 일반 게임 컨트롤은 기존대로 유지되는지 확인한다. |
+| 다른 Change Item과의 의존성 | CR-005의 이름 입력 UI와 직접 연결되므로 같은 입력 필드를 공유한다. |
+| 완료 기준 | 이름 입력칸에 `wasd`와 방향키가 포함된 텍스트를 입력해도 값이 누락되지 않는다. |
+| 검증 방법 | Playwright 또는 브라우저에서 입력칸에 `wasd`와 일반 문자열을 입력해 실제 입력값을 비교한다. 게임 패널에 포커스가 있을 때는 기존 게임 조작이 계속 동작하는지도 확인한다. |
+| 회귀 테스트 | 기존 게임 시작/일시정지/재시작/게임오버, 키보드 조작, 모바일 조작, 점수 저장, 리더보드, 브라우저 콘솔, GitHub Pages 상대 경로 |
+| 위험도 | MEDIUM |
+| 배포 필요 여부 | Yes |
+| 사람 확인 필요 항목 | 없음 |
+
+### 11.4 공통 테스트 계획
+
+#### 변경 전 재현 테스트
+
+- 이름 입력칸에 포커스를 둔다.
+- `wasd` 또는 화살표 키를 입력한다.
+- 기대되는 실패 결과는 일부 문자가 입력되지 않거나 게임 방향 전환이 우선되는 것이다.
+- 재현 환경은 로컬 정적 서버와 GitHub Pages 배포본이다.
+
+#### 변경 후 테스트
+
+- 동일한 입력 절차를 다시 수행한다.
+- 이름 입력값이 정확히 유지되는지 확인한다.
+- 게임 패널에 포커스가 있을 때는 기존 방향키/`WASD` 조작이 계속 동작하는지 확인한다.
+- 자동 검증 가능 여부는 Playwright 입력 스모크 테스트로 확인한다.
+
+#### 회귀 테스트
+
+- 기존 프로페셔널 웹사이트
+- 기존 페이지와 콘텐츠
+- 내비게이션
+- 모바일 반응형
+- Games 탭
+- 기존 게임 기능
+- 키보드 조작
+- 모바일 조작
+- 점수 및 게임 상태
+- 브라우저 콘솔
+- 깨진 링크
+- GitHub Pages 상대 경로
+
+### 11.5 실행 순서
+
+1. CR-006
+
+### 11.6 현재 상태
+
+- 현재 상태: `DEPLOY_APPROVAL_REQUIRED`
+- 다음 단계: 사용자가 재배포를 승인하면 커밋/푸시/재배포 수행
+
+### 11.7 Execution Update
+
+| Change Item ID | Status | Actual Modified Files | Test Results | Retry Count |
+|---|---|---|---|---|
+| CR-006 | PASSED | `game.js`, `CHANGE_REQUEST.md`, `AORR.md`, `MEMORY.md` | `node --check game.js` passed; Playwright input verification passed; game panel keyboard regression check passed | 0 |
+
+- 수정 전 재현: 이름 입력칸에 `wasd` 또는 `Arrow` 키를 입력하면 일부 문자가 누락되거나 게임 조작으로 소비되는 현상 확인
+- 수정 후 테스트: 이름 입력칸에 `wasd`와 `abc`를 입력했을 때 각각 `wasd`, `abc`가 온전히 입력됨; 게임 패널 포커스 상태에서 `ArrowUp` 입력 시 `gameState=running`, `nextDirection=(0,-1)` 확인
+- 회귀 테스트: 기존 게임 시작/일시정지/재시작/게임오버, 키보드 조작, 모바일 조작, 점수 저장, 리더보드, 브라우저 콘솔, GitHub Pages 상대 경로
+- 사람 확인 필요 항목: 없음
